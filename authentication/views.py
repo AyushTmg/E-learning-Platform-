@@ -2,7 +2,8 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED,HTTP_200_OK,HTTP_401_UNAUTHORIZED,HTTP_404_NOT_FOUND
-from .serializers import UserRegistrationSerializer,UserActivationSerializer,UserLoginSerializer,UserChangePasswordSerializer
+from .serializers import UserRegistrationSerializer,UserActivationSerializer,UserLoginSerializer\
+    ,UserChangePasswordSerializer,SendResetPasswordEmailSerializer,PasswordResetSerializer
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from django.utils.translation import gettext_lazy as _ 
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -63,3 +64,21 @@ class UserChangePasswordView(APIView):
         serializer.is_valid(raise_exception=True)
         return Response({"message":"Password changed successfully successfully"},status=HTTP_200_OK)
 
+class SendResetPasswordEmailView(APIView):
+    serializer_class=SendResetPasswordEmailSerializer
+    permission_classes=[AllowAny]
+
+    def post(self,request) -> Response:
+        serializer=self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(_("Reset Password Email has been sent to the email"),status=HTTP_200_OK)
+    
+class PassswordResetView(APIView):
+    serializer_class=PasswordResetSerializer
+
+    def post(self,request,**kwargs) -> Response:
+        uid=self.kwargs['uid']
+        token=self.kwargs['token']
+        serializer=self.serializer_class(data=request.data,context={'uid':uid,'token':token})
+        serializer.is_valid(raise_exception=True)
+        return Response(_("Password successfully changed"),status=HTTP_200_OK)

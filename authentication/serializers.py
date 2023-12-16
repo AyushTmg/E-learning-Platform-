@@ -44,7 +44,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 "body":body,
                 "to_email":email
             }
-            Util.send_activation_email(data)
+            Util.send_email(data)
             return user 
         except Exception as e:
             print(f"error --> {e}")
@@ -96,6 +96,57 @@ class UserChangePasswordSerializer(serializers.Serializer):
         user.set_password(new_password)
         user.save()
         return attrs
+
+class SendResetPasswordEmailSerializer(serializers.Serializer):
+      email=serializers.EmailField()
+
+      def validate(self, attrs):
+        email=attrs.get('email')
+        if User.objects.filter(email=email).exists():
+            user=User.objects.get(email=email)
+            uid=urlsafe_base64_encode(force_bytes(user.id))
+            token=PasswordResetTokenGenerator().make_token(user)
+            link=f'http://127.0.0.1:8000/api/user/reset-password/{uid}/{token}/'
+            subject="Resetting Password"
+            body=f"Click on the link for resetting password {link}"
+            email=user.email
+            data={
+                "subject":subject,
+                "body":body,
+                "to_email":email
+            }
+            Util.send_email(data)
+            return attrs
+        else:
+            raise serializers.ValidationError(_("User with the given email doesn't exist"))
+        
+        
+class PasswordResetSerializer(serializers.Serializer):
+    password=serializers.CharField(style={'input_type':'password'},write_only=True,validators=[validate_password])
+    password_confirmation=serializers.CharField(style={'input_type':'password'},write_only=True,validators=[validate_password])
+
+    def validate(self, attrs):
+        password=attrs.get('password')
+        password_confirmation=attrs.get('password_confirmation')
+        uid=self.context['uid']
+        token=self.context['token']
+        id=smart_str(urlsafe_base64_decode(uid))
+
+        if password != password_confirmation:
+            raise serializers.ValidationError(_("Two password field doesn't match"))
+        
+        try:
+            user = User.objects.get(id=id)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(_("User not found"))
+        
+        if not PasswordResetTokenGenerator().check_token(user,token):
+            raise serializers.ValidationError(_("Token Expired or Invalid"))
+        
+        user.set_password(password)
+        user.save()
+        return attrs
+
 
     
  
