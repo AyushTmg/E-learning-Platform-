@@ -147,7 +147,11 @@ class PasswordResetSerializer(serializers.Serializer):
         user.save()
         return attrs
 
-
+class UserProfileSerializer(serializers.ModelSerializer):
+    user=serializers.StringRelatedField()
+    class Meta:
+        model=Profile 
+        fields=['user','username','bio','phone','location']
     
  
     
