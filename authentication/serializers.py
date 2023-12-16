@@ -5,7 +5,7 @@ from .models import User,Profile
 from django.utils.http import urlsafe_base64_decode,urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_bytes
-from .utils import Util
+from .tasks import activation_email_task, password_reset_task
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -36,15 +36,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             uid=urlsafe_base64_encode(force_bytes(user.id))
             token=PasswordResetTokenGenerator().make_token(user)
             link=f'http://127.0.0.1:8000/api/user/activate/{uid}/{token}/'
-            body=f"Click on this link for activating users account {link}"
             subject="Account activation"
             email=user.email
             data={
                 "subject":subject,
-                "body":body,
+                "link":link,
                 "to_email":email
             }
-            Util.send_email(data)
+            activation_email_task.delay(data)
             return user 
         except Exception as e:
             print(f"error --> {e}")
@@ -108,14 +107,13 @@ class SendResetPasswordEmailSerializer(serializers.Serializer):
             token=PasswordResetTokenGenerator().make_token(user)
             link=f'http://127.0.0.1:8000/api/user/reset-password/{uid}/{token}/'
             subject="Resetting Password"
-            body=f"Click on the link for resetting password {link}"
             email=user.email
             data={
                 "subject":subject,
-                "body":body,
+                "link":link,
                 "to_email":email
             }
-            Util.send_email(data)
+            password_reset_task.delay(data)
             return attrs
         else:
             raise serializers.ValidationError(_("User with the given email doesn't exist"))
