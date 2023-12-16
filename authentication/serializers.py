@@ -6,8 +6,6 @@ from django.utils.http import urlsafe_base64_decode,urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_bytes
 from .utils import Util
-from django.db import transaction
-from rest_framework.status import HTTP_401_UNAUTHORIZED,HTTP_400_BAD_REQUEST
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -22,7 +20,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password=attrs.get('password')
         password_confirmation=attrs.get('password_confirmation')
         if password!= password_confirmation:
-            raise serializers.ValidationError(_("Two Password doesn't match "),status=HTTP_400_BAD_REQUEST)
+            raise serializers.ValidationError(_("Two Password doesn't match "))
         return attrs
     
     def create(self,validated_data):
@@ -60,7 +58,7 @@ class UserActivationSerializer(serializers.Serializer):
             id=smart_str(urlsafe_base64_decode(uid))
             user=User.objects.get(id=id)
             if not PasswordResetTokenGenerator().check_token(user,token):
-                raise serializers.ValidationError(_("Tokens doesn't match or is exprired"),status=HTTP_401_UNAUTHORIZED)
+                raise serializers.ValidationError(_("Tokens doesn't match or is exprired"))
             user.is_active=True
             user.save()
             return attrs
@@ -68,10 +66,40 @@ class UserActivationSerializer(serializers.Serializer):
             print(f"error --> {e}")
             raise serializers.ValidationError(_("Somme Error occoured during activation"))
 
-
 class UserLoginSerializer(serializers.ModelSerializer):
     email=serializers.EmailField()
     class Meta:
         model=User
         fields=['email','password']
 
+class UserChangePasswordSerializer(serializers.Serializer):
+    old_password=serializers.CharField(style={'input_type':'password'},write_only=True,validators=[validate_password])
+    new_password=serializers.CharField(style={'input_type':'password'},write_only=True,validators=[validate_password])
+    new_password_confirmation=serializers.CharField(style={'input_type':'password'},write_only=True,validators=[validate_password])
+    
+
+    def validate_old_password(self,value):
+        user = self.context["user"]
+        if not user.check_password(value):
+            raise serializers.ValidationError(_("Current password doesn't match"))
+        return value
+    
+    def validate(self, attrs):
+        old_password=attrs.get('old_password')
+        new_password=attrs.get('new_password')
+        new_password_confirmation=attrs.get('new_password_confirmation')
+        if new_password != new_password_confirmation:
+            raise serializers.ValidationError(_('Two Passwords does not match'))
+        if old_password==new_password:
+            raise serializers.ValidationError(_('New passwords cannot be similar to current password '))
+        user=self.context['user']
+        user.set_password(new_password)
+        user.save()
+        return attrs
+
+    
+ 
+    
+
+    
+    

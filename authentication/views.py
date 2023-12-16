@@ -2,8 +2,8 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED,HTTP_200_OK,HTTP_401_UNAUTHORIZED,HTTP_404_NOT_FOUND
-from .serializers import UserRegistrationSerializer,UserActivationSerializer,UserLoginSerializer
-from rest_framework.permissions import AllowAny
+from .serializers import UserRegistrationSerializer,UserActivationSerializer,UserLoginSerializer,UserChangePasswordSerializer
+from rest_framework.permissions import AllowAny,IsAuthenticated
 from django.utils.translation import gettext_lazy as _ 
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -17,8 +17,6 @@ def get_tokens_for_user(user):
         'refresh':str(refresh),
         'access': str(refresh.access_token),
     }
-
-
 
 class UserRegistrationView(APIView):
     serializer_class=UserRegistrationSerializer
@@ -55,3 +53,13 @@ class UserLoginView(APIView):
         else:
             return Response(_("Invalid Credential provided"),status=HTTP_401_UNAUTHORIZED)
             
+class UserChangePasswordView(APIView):
+    serializer_class=UserChangePasswordSerializer
+    permission_classes=[IsAuthenticated]
+
+    def post(self,request) -> Response:
+        user=request.user
+        serializer=self.serializer_class(data=request.data,context={'user':user})
+        serializer.is_valid(raise_exception=True)
+        return Response({"message":"Password changed successfully successfully"},status=HTTP_200_OK)
+
