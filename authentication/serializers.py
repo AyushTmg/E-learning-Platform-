@@ -67,3 +67,11 @@ class UserActivationSerializer(serializers.Serializer):
         except Exception as e:
             print(f"error --> {e}")
             raise serializers.ValidationError(_("Somme Error occoured during activation"))
+
+
+class UserLoginSerializer(serializers.ModelSerializer):
+    email=serializers.EmailField()
+    class Meta:
+        model=User
+        fields=['email','password']
+
