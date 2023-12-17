@@ -1,15 +1,14 @@
-from django.shortcuts import render
+from django.contrib.auth import authenticate
+from django.utils.translation import gettext_lazy as _ 
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED,HTTP_200_OK,HTTP_401_UNAUTHORIZED,HTTP_404_NOT_FOUND
-from .serializers import UserRegistrationSerializer,UserActivationSerializer,UserLoginSerializer\
-    ,UserChangePasswordSerializer,SendResetPasswordEmailSerializer,PasswordResetSerializer\
-    ,UserProfileSerializer
 from rest_framework.permissions import AllowAny,IsAuthenticated
-from django.utils.translation import gettext_lazy as _ 
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
+from .serializers import ( UserRegistrationSerializer,UserActivationSerializer,UserLoginSerializer\
+    ,UserChangePasswordSerializer,SendResetPasswordEmailSerializer,PasswordResetSerializer\
+    ,UserProfileSerializer )
 from .models import Profile
 
 

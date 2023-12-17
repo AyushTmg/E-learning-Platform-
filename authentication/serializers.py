@@ -1,11 +1,12 @@
 from django.utils.translation import gettext_lazy as _ 
 from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
-from .models import User,Profile
+from django.db import transaction
 from django.utils.http import urlsafe_base64_decode,urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_bytes
+from rest_framework import serializers
 from .tasks import activation_email_task, password_reset_task
+from .models import ( User ,Profile ) 
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -25,26 +26,30 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     def create(self,validated_data):
         try:
-            user=User.objects.create(
-                first_name=validated_data['first_name'],
-                last_name=validated_data['last_name'],
-                birth_date=validated_data['birth_date'],
-                email=validated_data['email'],
-            )
-            user.set_password(validated_data['password'])
-            user.save()
-            uid=urlsafe_base64_encode(force_bytes(user.id))
-            token=PasswordResetTokenGenerator().make_token(user)
-            link=f'http://127.0.0.1:8000/api/user/activate/{uid}/{token}/'
-            subject="Account activation"
-            email=user.email
-            data={
-                "subject":subject,
-                "link":link,
-                "to_email":email
-            }
-            activation_email_task.delay(data)
-            return user 
+            with transaction.atomic():
+                user=User.objects.create(
+                    first_name=validated_data['first_name'],
+                    last_name=validated_data['last_name'],
+                    birth_date=validated_data['birth_date'],
+                    email=validated_data['email'],
+                )
+                user.set_password(validated_data['password'])
+                user.save()
+                uid=urlsafe_base64_encode(force_bytes(user.id))
+                token=PasswordResetTokenGenerator().make_token(user)
+                link=f'http://127.0.0.1:8000/api/user/activate/{uid}/{token}/'
+                subject="Account activation"
+                email=user.email
+
+                data={
+                    "subject":subject,
+                    "link":link,
+                    "to_email":email
+                }
+
+                activation_email_task.delay(data)
+                return user 
+            
         except Exception as e:
             print(f"error --> {e}")
             raise serializers.ValidationError(_("Somme Error occoured during registration"))
@@ -56,11 +61,14 @@ class UserActivationSerializer(serializers.Serializer):
             token=self.context['token']
             id=smart_str(urlsafe_base64_decode(uid))
             user=User.objects.get(id=id)
+
             if not PasswordResetTokenGenerator().check_token(user,token):
                 raise serializers.ValidationError(_("Tokens doesn't match or is exprired"))
+            
             user.is_active=True
             user.save()
             return attrs
+        
         except Exception as e:
             print(f"error --> {e}")
             raise serializers.ValidationError(_("Somme Error occoured during activation"))
@@ -101,24 +109,25 @@ class SendResetPasswordEmailSerializer(serializers.Serializer):
 
       def validate(self, attrs):
         email=attrs.get('email')
-        if User.objects.filter(email=email).exists():
-            user=User.objects.get(email=email)
-            uid=urlsafe_base64_encode(force_bytes(user.id))
-            token=PasswordResetTokenGenerator().make_token(user)
-            link=f'http://127.0.0.1:8000/api/user/reset-password/{uid}/{token}/'
-            subject="Resetting Password"
-            email=user.email
-            data={
-                "subject":subject,
-                "link":link,
-                "to_email":email
-            }
-            password_reset_task.delay(data)
-            return attrs
-        else:
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
             raise serializers.ValidationError(_("User with the given email doesn't exist"))
-        
-        
+
+        uid=urlsafe_base64_encode(force_bytes(user.id))
+        token=PasswordResetTokenGenerator().make_token(user)
+        link=f'http://127.0.0.1:8000/api/user/reset-password/{uid}/{token}/'
+        subject="Resetting Password"
+        email=user.email
+        data={
+            "subject":subject,
+            "link":link,
+            "to_email":email
+        }
+        password_reset_task.delay(data)
+        return attrs
+       
 class PasswordResetSerializer(serializers.Serializer):
     password=serializers.CharField(style={'input_type':'password'},write_only=True,validators=[validate_password])
     password_confirmation=serializers.CharField(style={'input_type':'password'},write_only=True,validators=[validate_password])
