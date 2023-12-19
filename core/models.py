@@ -24,6 +24,9 @@ class Course(models.Model):
         elif self.price is None:
             raise models.ValidationError("Price is required for non-free courses")
         
+    def __str__(self) -> str:
+        return self.title
+        
 class Content(models.Model):
     title=models.CharField(max_length=150)
     course = models.ForeignKey(Course, on_delete=models.CASCADE,related_name='content')
@@ -32,12 +35,19 @@ class Content(models.Model):
             FileExtensionValidator(allowed_extensions=['mp4', 'avi', 'mkv'])
         ])
     files=models.FileField(
-        upload_to='content-file/',validators=[
+        upload_to='content-file/',blank=True,null=True,validators=[
             FileExtensionValidator(allowed_extensions=["pdf", "docx"])
         ])
     
+    def __str__(self) -> str:
+        return self.title
+    
+    
     
 class Enrollment(models.Model):
-    course=models.OneToOneField(Course,on_delete=models.PROTECT,related_name='enrollment',primary_key=True)
+    course=models.ForeignKey(Course,on_delete=models.PROTECT,related_name='enrollment')
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,related_name='enrollment')
-    created_at=models.DateField(auto_now_add=True)
+    created_at=models.DateField(auto_now_add=True) 
+
+    def __str__(self) -> str:
+        return f"{self.user} enrolled in {self.course} course"
