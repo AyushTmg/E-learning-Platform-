@@ -1,5 +1,5 @@
-from .tasks import password_reset_task
 from .models import User 
+from .tasks import password_reset_task,change_email_task
 
 from rest_framework import serializers
 
@@ -236,3 +236,96 @@ class PasswordResetSerializer(serializers.Serializer):
         user.set_password(password)
         user.save()
         return attrs
+
+
+
+
+# ! Serializer For Changing Email Address 
+class SendEmailToChangeEmailSerializer(serializers.Serializer):
+    old_password=serializers.CharField(
+        style={'input_type':'password'},
+        write_only=True,
+    )
+
+
+    def validate_old_password(self,value):
+        """
+        Validation for Checking if old password matches or not 
+        if it matches a email will be sent to a user email with a
+        link to change user email address
+        """
+        user = self.context["user"]
+        if not user.check_password(value):
+            raise serializers.ValidationError(
+                _("Current password doesn't match")
+                )
+        
+        # ! For Creating a Unique Uid and Token For User 
+        uid=urlsafe_base64_encode(force_bytes(user.id))
+        token=PasswordResetTokenGenerator().make_token(user)
+
+        link=f'http://127.0.0.1:8000/api/auth/change-email/{uid}/{token}/'
+        subject="Change Email Link"
+        email=user.email
+
+        # ! Data For Passing To Celery Task
+        data={
+            "subject":subject,
+            "link":link,
+            "to_email":email
+        }
+
+        # ! Celery Task For Sending Email
+        
+        change_email_task.delay(data)
+        return value
+
+
+
+
+
+# ! Serializer For Changing Users Email 
+class ChangeEmailSerailizer(serializers.Serializer):
+    new_email=serializers.EmailField()
+
+    def validate(self, attrs):
+        """
+        Validate uid and tokens and also validates
+        if there is user with the new email provided
+        or not if not set it as user new email 
+        """
+        email=attrs.get('new_email')
+
+        # ! Get the Uid and Token Passed From The View 
+        uid=self.context['uid']
+        token=self.context['token']
+
+        # ! Decode the User id from the uid
+        id=smart_str(urlsafe_base64_decode(uid))
+
+        # ! Checking If the user with given email already exists or not 
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                _("User with this email already exists.")
+            )
+         
+        # ! Check If the User With The Decoded id Exists Or Not
+        try:
+            user = User.objects.get(id=id)
+        # ! IF Not Raises Validation Error
+        except User.DoesNotExist:
+            raise serializers.ValidationError(_("User not found"))
+        
+
+        # ! Checks IF The Uid and Token Received Matches With the One 
+        # ! Generated For the User Or Not If Not Valdiation Error Is Raised 
+        if not PasswordResetTokenGenerator().check_token(user,token):
+            raise serializers.ValidationError(_("Token Expired or Invalid"))
+        
+
+        # ! Finally Set New Email IF No Error is Faced
+        user.email=email
+        user.save()
+        return attrs
+
+

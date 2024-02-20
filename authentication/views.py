@@ -4,6 +4,8 @@ from .serializers import (
     UserRegistrationSerializer,
     UserChangePasswordSerializer,
     SendResetPasswordEmailSerializer,
+    SendEmailToChangeEmailSerializer,
+    ChangeEmailSerailizer
 )
 
 
@@ -170,5 +172,62 @@ class PassswordResetView(APIView):
 
 
 
+
+# ! View For Sending Email To Change Email
+class SendEmailForChangingEmailView(APIView): 
+    serializer_class=SendEmailToChangeEmailSerializer
+    permission_classes=[IsAuthenticated]
+
+
+    def post(self,request,**kwargs) -> Response:
+        """
+        Validates and send email with a link to 
+        actually change the email 
+        """
+        user=request.user
+        serializer=self.serializer_class(
+            data=request.data,
+            context={'user':user}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        return Response(
+            _("Email For Changing Email Has Been Successfully Sent"),
+            status=HTTP_200_OK
+        )
+    
+
+
+
+# ! View For Changing Email 
+class EmailChangeView(APIView):
+    serializer_class=ChangeEmailSerailizer
+
+
+    def post(self,request,**kwargs) -> Response:
+        """
+        Method Whoch Verifies Token And Allows User
+        To Change His/Her Email By Passing Uid And Token
+        From The Url Parameter
+        """
+        uid=self.kwargs['uid']
+        token=self.kwargs['token']
+
+        serailizer=self.serializer_class(
+            data=request.data,
+            context={'uid':uid,'token':token}
+        )
+
+        serailizer.is_valid(raise_exception=True)
+        
+        return Response(
+            _("Email Has Been successfully changed"),
+            status=HTTP_200_OK
+        )
+
+    
+    
+
+    
 
 

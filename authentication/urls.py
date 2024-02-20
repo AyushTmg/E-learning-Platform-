@@ -4,6 +4,8 @@ from .views import (
     UserChangePasswordView,
     SendResetPasswordEmailView,
     PassswordResetView,
+    SendEmailForChangingEmailView,
+    EmailChangeView
 )
 
 
@@ -19,4 +21,7 @@ urlpatterns = [
     path('change-password/',UserChangePasswordView.as_view(),name="user-change-password"),
     path('send-reset-password-email/',SendResetPasswordEmailView.as_view(),name="send-reset-password-email"),
     path('reset-password/<str:uid>/<str:token>/',PassswordResetView.as_view(),name="user-password-reset"),
+    path('send_email_to_change_email/',SendEmailForChangingEmailView.as_view(),name='send_email_to_change_email'),
+    path('change-email/<str:uid>/<str:token>/',EmailChangeView.as_view(),name='user-change-email')
+    
 ]
