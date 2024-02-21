@@ -8,9 +8,11 @@ click-didyoumean==0.3.0
 click-plugins==1.1.1
 click-repl==0.3.0
 Django==5.0
+django-debug-toolbar==4.3.0
 django-dotenv==1.4.2
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.1
+drf-nested-routers==0.93.5
 kombu==5.3.4
 Pillow==10.1.0
 prompt-toolkit==3.0.43
