@@ -5,8 +5,10 @@ from django.urls import path,include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/user/',include('authentication.urls')),
-    path('',include('core.urls'))
+    path('api/auth/',include('authentication.urls')),
+    path("__debug__/", include("debug_toolbar.urls")),
+    path('api/',include('elearning.urls')),
+    path('api/forum/',include('forum.urls'))
 ]
 
 

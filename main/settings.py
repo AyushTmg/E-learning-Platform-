@@ -2,24 +2,32 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-5xud%xomo_v4l1hfd$gb^ux(j5*0s6buzm#8q_=fc55=_es1=%'
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# ! APPS FROM THIS PROJECT
+PROJECT_APPS=[
+    'authentication',
+    'elearning',
+    'forum',
+]
 
-# Application definition
 
+# ! THIRD PARTY APPS
+THIRDPARTY_APPS=[
+    "debug_toolbar",
+    'rest_framework_simplejwt',
+    'rest_framework',
+]
+
+
+# ! PREINSTALLED APPS FOR PROJECT
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -27,11 +35,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework_simplejwt',
-    'rest_framework',
-    'authentication',
-    'core',
 ]
+
+
+INSTALLED_APPS+=PROJECT_APPS
+INSTALLED_APPS+=THIRDPARTY_APPS
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -41,9 +50,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
+
 ROOT_URLCONF = 'main.urls'
+
 
 TEMPLATES = [
     {
@@ -64,9 +76,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'main.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -74,9 +83,6 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -94,8 +100,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
@@ -112,6 +116,7 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS=[
     os.path.join(BASE_DIR,'static')
 ]
+
 # !CONFIGURATION'S FOR MEDIA FILES
 MEDIA_URL='media/'
 MEDIA_ROOT=os.path.join(BASE_DIR,'media')
@@ -159,3 +164,9 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL')
 
 # ! CELERY SETTINGS
 CELERY_BROKER_URL='redis://127.0.0.1:6379/0'
+
+
+# ! CONFIGURATIONS FOR DJANGO DEBUG TOOLBAR
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
