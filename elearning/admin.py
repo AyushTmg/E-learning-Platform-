@@ -20,7 +20,7 @@ class CourseAdmin(admin.ModelAdmin):
 
     @admin.display(ordering='enrollment_count')
     def enrollment_count(self,course):
-        url=reverse('admin:core_enrollment_changelist')+"?"+urlencode({"course__id":str(course.id)})
+        url=reverse('admin:elearning_enrollment_changelist')+"?"+urlencode({"course__id":str(course.id)})
         return format_html(f'<a href="{url}" target="_blank">{course.enrollment_count}</a>')
     
     def get_queryset(self, request):
