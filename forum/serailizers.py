@@ -2,7 +2,6 @@ from .models import Question,Answer
 from rest_framework import serializers 
 
 
-
 # ! Serializer For Question 
 class QuestionSerailizer(serializers.ModelSerializer):
     user=serializers.StringRelatedField()
@@ -13,6 +12,7 @@ class QuestionSerailizer(serializers.ModelSerializer):
             'id',
             'user',
             'title',
+            'likes',
             'time_stamp',
             'description',
         ]
@@ -41,6 +41,7 @@ class AnswerSerailizer(serializers.ModelSerializer):
         fields=[
             'id',
             'user',
+            'likes',
             'time_stamp',
             'description',
         ]
@@ -60,3 +61,8 @@ class AnswerSerailizer(serializers.ModelSerializer):
             **validated_data
         )
 
+
+
+# ! EmptySerailizer
+class EmptySerializer(serializers.Serializer):
+    pass
