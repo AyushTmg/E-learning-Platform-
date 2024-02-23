@@ -3,13 +3,13 @@ from django.conf import settings
 
 
 
-
 # ! Models For Raising Question In The Forum
 class Question(models.Model):
     title=models.CharField(max_length=50)
     description=models.CharField(max_length=200)
     time_stamp=models.DateTimeField(auto_now_add=True)
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='question')
+    likes=models.IntegerField(default=0,null=True,blank=True)
 
 
     def __str__(self) -> str:
@@ -25,7 +25,8 @@ class Question(models.Model):
 class Answer(models.Model):
     description=models.CharField(max_length=100)
     time_stamp=models.DateTimeField(auto_now_add=True)
-    question=models.ForeignKey(Question,on_delete=models.CASCADE,realted_name='answer')
+    question=models.ForeignKey(Question,on_delete=models.CASCADE,related_name='answer')
+    likes=models.IntegerField(default=0,null=True,blank=True)
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='answer')
 
 
@@ -33,7 +34,7 @@ class Answer(models.Model):
 
 # !Like  Model Answer
 class AnswerLike(models.Model):
-    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='answer_likes')
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     class Meta:
@@ -44,7 +45,7 @@ class AnswerLike(models.Model):
 
 # !Like  Model Question
 class QuestionLike(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='lquestion_ikes')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     class Meta:
