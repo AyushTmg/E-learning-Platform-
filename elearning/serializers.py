@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import Course,Content,Enrollment
+from .models import Course,Content,Enrollment,CoursePart
+
+
+
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -12,10 +15,11 @@ class CourseSerializer(serializers.ModelSerializer):
             'description',
             'price',
             'duration',
-            'created_at',
+            'time_stamp',
             'is_free',
-            'ratings'
         ]
+
+
 
 class ContentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,8 +28,42 @@ class ContentSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'video',
-            'course'
         ]
+
+
+class CoursePartSerializer(serializers.ModelSerializer):
+    content=ContentSerializer(many=True)
+    class Meta: 
+        model=CoursePart
+        fields=[
+            'id',
+            'title',
+            'content'
+        ]
+
+
+class CourseDetailSerializer(serializers.ModelSerializer):
+    course_part=CoursePartSerializer(many=True)
+    class Meta:
+        model=Course 
+        fields=[
+            'id',
+            'title',
+            'image',
+            'description',
+            'price',
+            'duration',
+            'time_stamp',
+            'is_free',
+            'course_part',
+            
+        ]
+
+
+
+
+
+
 
 class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
