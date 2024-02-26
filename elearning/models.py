@@ -1,22 +1,20 @@
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.core.validators import FileExtensionValidator
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
+
+# ! Course Model
 class Course(models.Model):
     title=models.CharField(max_length=150)
-    image=models.ImageField(upload_to='course-images/')
     description=models.TextField()
     duration=models.IntegerField()
+    image=models.ImageField(upload_to='course-images/')
     is_free = models.BooleanField(default=False)
     price = models.IntegerField(blank=True, null=True)
-    created_at = models.DateField(auto_now_add=True)
+    time_stamp = models.DateField(auto_now_add=True)
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
-    ratings=models.IntegerField(
-        validators=[
-            MinValueValidator(1),MaxValueValidator(5)
-        ])
 
     def clean(self):
         if self.is_free:
@@ -24,12 +22,30 @@ class Course(models.Model):
         elif self.price is None:
             raise models.ValidationError("Price is required for non-free courses")
         
+
     def __str__(self) -> str:
         return self.title
-        
+    
+
+
+
+# ! Course Part Model 
+class CoursePart(models.Model):
+    title=models.CharField(max_length=20)
+    course=models.ForeignKey(Course, on_delete=models.CASCADE,related_name='course_part')
+
+    def __str__(self) -> str:
+        """
+        For returing the string object of course part 
+        """
+        return self.title
+
+
+
+
+# ! Content Model
 class Content(models.Model):
     title=models.CharField(max_length=150)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE,related_name='content')
     video=models.FileField( 
         upload_to='course-content/',validators=[
             FileExtensionValidator(allowed_extensions=['mp4', 'avi', 'mkv'])
@@ -38,16 +54,27 @@ class Content(models.Model):
         upload_to='content-file/',blank=True,null=True,validators=[
             FileExtensionValidator(allowed_extensions=["pdf", "docx"])
         ])
+    course_part= models.ForeignKey(CoursePart, on_delete=models.CASCADE,related_name='content')
+
     
     def __str__(self) -> str:
+        """
+        For returing the string object of content
+        """
         return self.title
+
     
     
-    
+
+# ! Enrollment Model 
 class Enrollment(models.Model):
     course=models.ForeignKey(Course,on_delete=models.PROTECT,related_name='enrollment')
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT,related_name='enrollment')
-    created_at=models.DateField(auto_now_add=True) 
+    time_stamp=models.DateField(auto_now_add=True) 
+
 
     def __str__(self) -> str:
+        """
+        For returning the string object of enrollment model
+        """
         return f"{self.user} enrolled in {self.course} course"
