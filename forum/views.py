@@ -12,6 +12,8 @@ from .serailizers import (
     EmptySerializer
 )
 
+from utils.response.response import CustomResponse as cr 
+
 
 from rest_framework.response import Response
 from rest_framework.decorators import action 
@@ -104,13 +106,14 @@ class QuestionViewSet(ModelViewSet):
                 question=Question.objects.get(id=pk)
                 question.likes+=1
                 question.save()
-
-                return Response(status=HTTP_201_CREATED)
+                
+                return cr.success(status=HTTP_201_CREATED)
+            
         
             except Exception as e:
                 # ! Just For handeling Expections
                 print('Error alert: A user is trying to like same object multiple times ')
-                return Response(status=HTTP_500_INTERNAL_SERVER_ERROR)
+                return cr.error(status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 
         if request.method=='DELETE':
@@ -128,7 +131,7 @@ class QuestionViewSet(ModelViewSet):
             question.likes-=1
             question.save()
             
-            return Response(status=HTTP_204_NO_CONTENT)
+            return cr.success(status=HTTP_204_NO_CONTENT)
 
 
 
@@ -218,12 +221,13 @@ class AnswerViewSet(ModelViewSet):
                 answer.likes+=1
                 answer.save()
 
-                return Response(status=HTTP_201_CREATED)
+                return cr.success(status=HTTP_201_CREATED)
+            
             
             except Exception as e:
                 # ! Just For handeling Expections
                 print('Error alert: A user is trying to like same object multiple times ')
-                return Response(status=HTTP_500_INTERNAL_SERVER_ERROR)
+                return cr.error(status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 
         if request.method=='DELETE':
@@ -241,8 +245,8 @@ class AnswerViewSet(ModelViewSet):
             answer.likes-=1
             answer.save()
 
-            return Response(status=HTTP_204_NO_CONTENT)
-
+            return cr.success(status=HTTP_204_NO_CONTENT)
+            
 
     
 

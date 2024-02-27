@@ -8,6 +8,8 @@ from .serializers import (
     ChangeEmailSerailizer
 )
 
+from utils.response.response import CustomResponse as cr 
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -56,8 +58,8 @@ class UserRegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response(
-            _("Your account has been successfully registered"),
+        return cr.success(
+            message="Your account has been successfully registered",
             status=HTTP_201_CREATED
         )
 
@@ -86,14 +88,16 @@ class UserLoginView(APIView):
         # ! If a User exists  then generate Token for that user
         if user is not  None:
             token=get_tokens_for_user(user)
-            return Response(
-                {"token":token,"message":"Logged in successfully"},
-                status=HTTP_200_OK
+            return cr.success(
+                data=token,
+                message="Logged in successfully",
+                status=HTTP_200_OK,
             )
         
         # ! If User Doesn't exists or Invalid Credintials 
-        return Response(
-            _("Invalid Credential provided"),
+    
+        return cr.error(
+            message="Invalid Credential provided",
             status=HTTP_401_UNAUTHORIZED
         )
 
@@ -118,8 +122,8 @@ class UserChangePasswordView(APIView):
         )
         serializer.is_valid(raise_exception=True)
 
-        return Response(
-            {"message":"Password changed successfully successfully"},
+        return cr.success(
+            message="Password changed successfully successfully",
             status=HTTP_200_OK
         )
 
@@ -139,10 +143,11 @@ class SendResetPasswordEmailView(APIView):
         serializer=self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        return Response(
-            _("Reset Password Email has been sent to the email"),
+        return cr.success(
+            message="Reset Password Email has been sent to the email",
             status=HTTP_200_OK
         )
+
     
 
 
@@ -164,9 +169,9 @@ class PassswordResetView(APIView):
             context={'uid':uid,'token':token}
         )
         serializer.is_valid(raise_exception=True)
-
-        return Response(
-            _("Password successfully changed"),
+        
+        return cr.success(
+            message="Password successfully changed",
             status=HTTP_200_OK
         )
 
@@ -191,11 +196,10 @@ class SendEmailForChangingEmailView(APIView):
         )
         serializer.is_valid(raise_exception=True)
 
-        return Response(
-            _("Email For Changing Email Has Been Successfully Sent"),
-            status=HTTP_200_OK
+        return cr.success(
+            message="Email For Changing Email Has Been Successfully Sent",
         )
-    
+
 
 
 
@@ -219,11 +223,12 @@ class EmailChangeView(APIView):
         )
 
         serailizer.is_valid(raise_exception=True)
-        
-        return Response(
-            _("Email Has Been successfully changed"),
-            status=HTTP_200_OK
+
+        return cr.success(
+            message="Email Has Been successfully changed"
         )
+        
+
 
     
     
