@@ -8,6 +8,7 @@ from .serializers import (
 
 
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.status import HTTP_201_CREATED
 from rest_framework.generics import (
     ListAPIView,
     CreateAPIView,
@@ -88,14 +89,31 @@ class EnrollmentView(CreateAPIView):
     def create(self, request, *args, **kwargs):
         """
         Overrding the method just for adding custom response
+        and adding valdiation for enrolling 
         """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        course_id=self.kwargs['id']
+        course=Course.objects.get(id=course_id)
+
+        if not course.is_free:
+            return cr.error(message="You have to buy the course to enroll")    
+ 
+        if Course.objects.filter(user=request.user, id=course_id).exists():
+            return cr.error(message="Already Enrolled")
+            
         self.perform_create(serializer)
 
+
         return cr.success(
-            message="Successfully Enrolled"
+            message="Successfully Enrolled",
+            status=HTTP_201_CREATED
         )
+    
+
+    
+
 
     
 
