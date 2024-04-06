@@ -1,5 +1,6 @@
 from .models import User 
 from .tasks import password_reset_task,change_email_task
+from utils.exception.exception import CustomException as ce 
 
 from rest_framework import serializers
 
@@ -47,7 +48,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password_confirmation=attrs.get('password_confirmation')
 
         if password!= password_confirmation:
-            raise serializers.ValidationError(_("Two Password doesn't match "))
+            raise ce(
+                message="Two Password doesn't match "
+            )
         return attrs
     
 
@@ -70,8 +73,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # ! For handeling expections if any 
         except Exception as e:
             print(f"error --> {e}")
-            raise serializers.ValidationError(
-                _("Somme Error occoured during registration")
+            raise ce(
+                message="Somme Error occoured during registration"
             )
     
 
@@ -114,9 +117,9 @@ class UserChangePasswordSerializer(serializers.Serializer):
         """
         user = self.context["user"]
         if not user.check_password(value):
-            raise serializers.ValidationError(
-                _("Current password doesn't match")
-                )
+            raise ce(
+                message="Current password doesn't match"
+            )
         return value
     
     
@@ -130,13 +133,13 @@ class UserChangePasswordSerializer(serializers.Serializer):
         new_password_confirmation=attrs.get('new_password_confirmation')
 
         if new_password != new_password_confirmation:
-            raise serializers.ValidationError(
-                _('Two Passwords does not match')
+            raise ce(
+                message='Two Passwords does not match'
             )
         
         if old_password==new_password:
-            raise serializers.ValidationError(
-                _('New passwords cannot be similar to current password ')
+            raise ce(
+                message='New passwords cannot be similar to current password '
             )
         
         user=self.context['user']
@@ -161,7 +164,9 @@ class SendResetPasswordEmailSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError(_("User with the given email doesn't exist"))
+            raise ce(
+                message="User with the given email doesn't exist"
+            )
 
         # ! For Creating a Unique Uid and Token For User 
         uid=urlsafe_base64_encode(force_bytes(user.id))
@@ -216,8 +221,8 @@ class PasswordResetSerializer(serializers.Serializer):
 
         # ! Validation For Checkng IF Both Password Are The Same
         if password != password_confirmation:
-            raise serializers.ValidationError(
-                _("Two password field doesn't match")
+            raise ce(
+                message="Two password field doesn't match"
                 )
          
         # ! Check If the User With The Decoded id Exists Or Not
@@ -225,12 +230,16 @@ class PasswordResetSerializer(serializers.Serializer):
             user = User.objects.get(id=id)
         # ! IF Not Raises Validation Error
         except User.DoesNotExist:
-            raise serializers.ValidationError(_("User not found"))
+            raise ce(
+                message="User not found"
+            )
         
         # ! Checks IF The Uid and Token Received Matches With the One 
         # ! Generated For the User Or Not If Not Valdiation Error Is Raised 
         if not PasswordResetTokenGenerator().check_token(user,token):
-            raise serializers.ValidationError(_("Token Expired or Invalid"))
+            raise ce(
+                message="Token Expired or Invalid"
+            )
         
         # ! Finally Set Password IF no Error is Faced
         user.set_password(password)
@@ -256,8 +265,8 @@ class SendEmailToChangeEmailSerializer(serializers.Serializer):
         """
         user = self.context["user"]
         if not user.check_password(value):
-            raise serializers.ValidationError(
-                _("Current password doesn't match")
+            raise ce(
+                message="Current password doesn't match"
                 )
         
         # ! For Creating a Unique Uid and Token For User 
@@ -305,8 +314,8 @@ class ChangeEmailSerailizer(serializers.Serializer):
 
         # ! Checking If the user with given email already exists or not 
         if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-                _("User with this email already exists.")
+            raise ce(
+                message="User with this email already exists."
             )
          
         # ! Check If the User With The Decoded id Exists Or Not
@@ -314,13 +323,17 @@ class ChangeEmailSerailizer(serializers.Serializer):
             user = User.objects.get(id=id)
         # ! IF Not Raises Validation Error
         except User.DoesNotExist:
-            raise serializers.ValidationError(_("User not found"))
+            raise ce(
+                message="User not found"
+            )
         
 
         # ! Checks IF The Uid and Token Received Matches With the One 
         # ! Generated For the User Or Not If Not Valdiation Error Is Raised 
         if not PasswordResetTokenGenerator().check_token(user,token):
-            raise serializers.ValidationError(_("Token Expired or Invalid"))
+            raise ce(
+                message="Token Expired or Invalid"
+            )
         
 
         # ! Finally Set New Email IF No Error is Faced
