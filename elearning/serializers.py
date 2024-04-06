@@ -12,7 +12,7 @@ from utils.exception.exception import CustomException as ce
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
-
+import cv2
 
 
 
@@ -85,14 +85,39 @@ class WhatYouWillLearnSerailizer(ModelSerializer):
     
 # ! Course Content Serailizer 
 class ViewCourseContentSerailizer(ModelSerializer):
+    duration=serializers.SerializerMethodField(
+        method_name='get_duration'
+    )
 
     class Meta:
         model=Content
         fields=[
             'id',
             'title',
+            'duration'
         ]
 
+
+    def get_duration(self, content: Content):
+        filename = content.video.path
+        video = cv2.VideoCapture(filename)
+
+        frame_count = video.get(cv2.CAP_PROP_FRAME_COUNT)
+        
+        fps = video.get(cv2.CAP_PROP_FPS)
+
+        duration_seconds = frame_count / fps
+
+        minutes = int(duration_seconds // 60)
+        seconds = int(duration_seconds % 60)
+
+        seconds_str = "{:02d}".format(seconds)
+        video.release()
+
+        if minutes==0:
+            return f"{seconds_str}s"
+        
+        return f"{minutes}m {seconds_str}s"
 
 
 
