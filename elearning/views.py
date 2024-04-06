@@ -1,121 +1,100 @@
-from .models import Course ,Enrollment
 from utils.response.response import CustomResponse as cr
-from .serializers import (
+from .models import (
+    Course,
+    CourseOverView,
+    WhoIsThisFor,
+    WhatYouWillLearn,
+    Prerequisite,
+    CoursePart,
+    Content
+)
+
+
+from .serializers import(
     CourseSerializer,
-    CourseDetailSerializer,
-    EnrollmentSerializer,
+    CourseOverViewSerailizer,
+    CoursePartSerailizer,
+    PrerequisiteSerailizer,
+    WhatYouWillLearnSerailizer,
+    WhoIsThisForSerailizer
 )
 
 
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.status import HTTP_201_CREATED
-from rest_framework.generics import (
-    ListAPIView,
-    CreateAPIView,
-    RetrieveAPIView,
-)
+from rest_framework.viewsets import ModelViewSet
 
 
 
-
-# ! Course View 
-class CourseView(ListAPIView):
-    queryset = Course.objects.all().select_related('user')
-    serializer_class = CourseSerializer 
-
-
-    def list(self, request, *args, **kwargs):
-        """
-        Overrding the method just for adding custom response
-        """
-        queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return cr.success(
-            data=serializer.data
-        )
-
-
-
-
-
-
-# ! Course Detail View 
-class CourseDetailView(RetrieveAPIView):
-    queryset = Course
-    serializer_class = CourseDetailSerializer
-    lookup_field='id'
+# ! Course ViewSet
+class CourseViewSet(ModelViewSet):
+    serializer_class=CourseSerializer
+    queryset=Course.objects.all()
 
 
     def retrieve(self, request, *args, **kwargs):
-        """
-        Overrding the method just for adding custom response
-        """
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        return cr.success(
-            data=serializer.data,
+
+        # !For Overview of the course
+        course_overview=CourseOverView.objects.filter(
+            course=instance
         )
-    
+        course_overview_serializer=CourseOverViewSerailizer(
+            course_overview,
+            many=True
+        )
+
+        # ! For showing the Course Part 
+        course_part=CoursePart.objects.filter(
+            course=instance
+        ).prefetch_related('content')
+        course_part_serailizer=CoursePartSerailizer(
+            course_part,
+            many=True
+        )
+
+        # ! For Showing what user will learn from this course
+        learnings=WhatYouWillLearn.objects.get(
+            course=instance
+        )  
+        what_you_will_learn_serailizer=WhatYouWillLearnSerailizer(
+            learnings
+        )
+
+        # ! For showing the targeted audience for the course
+        targeted_audience=WhoIsThisFor.objects.get(
+            course=instance
+        )
+        who_is_this_for_serailizer=WhoIsThisForSerailizer(
+            targeted_audience
+        )
 
 
+        # ! For pointing the prerequisite for the course
+        prerequisite=Prerequisite.objects.get(
+            course=instance
+        )
+        prerequisite_serailizer=PrerequisiteSerailizer(
+            prerequisite
+        )
 
-# ! Enrollment View 
-class EnrollmentView(CreateAPIView):
-    serializer_class=EnrollmentSerializer
-    permission_classes=[IsAuthenticated]
-    lookup_field='id'
 
-
-    def get_serializer_context(self):
-        """
-        Method for passing course_id and user_id as
-        context to serailizer
-        """
-        course_id=self.kwargs['id']
-        user_id=self.request.user.id
-
-        return {
-            'course_id':course_id,
-            'user_id':user_id
+        data={
+            'course_detail':serializer.data,
+            'course_overview':course_overview_serializer.data,
+            'what_you_will_learn':what_you_will_learn_serailizer.data,
+            'course_part':course_part_serailizer.data,
+            'who_is_this_for':who_is_this_for_serailizer.data,
+            'prerequisite':prerequisite_serailizer.data
         }
-    
-
-    def create(self, request, *args, **kwargs):
-        """
-        Overrding the method just for adding custom response
-        and adding valdiation for enrolling 
-        """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        course_id=self.kwargs['id']
-        course=Course.objects.get(id=course_id)
-
-        if not course.is_free:
-            return cr.error(message="You have to buy the course to enroll")    
- 
-        if Course.objects.filter(user=request.user, id=course_id).exists():
-            return cr.error(message="Already Enrolled")
-            
-        self.perform_create(serializer)
-
 
         return cr.success(
-            message="Successfully Enrolled",
-            status=HTTP_201_CREATED
+            data=data
         )
-    
-
-    
 
 
-    
+
+
+
 
     
 

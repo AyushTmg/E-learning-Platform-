@@ -1,97 +1,113 @@
+from .models import (
+    Course,
+    CourseOverView,
+    WhoIsThisFor,
+    WhatYouWillLearn,
+    Prerequisite,
+    CoursePart,
+    Content
+)
+from utils.exception.exception import CustomException as ce 
+
 from rest_framework import serializers
-from .models import Course,Content,Enrollment,CoursePart
+from rest_framework.serializers import ModelSerializer
 
 
 
 
-# ! Serailizer For Course Model 
-class CourseSerializer(serializers.ModelSerializer):
+
+
+# ! Course Serailizer 
+class CourseSerializer(ModelSerializer):
     class Meta:
-        model=Course 
+        model=Course
         fields=[
             'id',
             'title',
-            'image',
             'description',
-            'price',
             'duration',
-            'time_stamp',
+            'image',
             'is_free',
+            'price',
+            'time_stamp',
         ]
 
 
 
 
-# ! Serailizer For Content Model 
-class ContentSerializer(serializers.ModelSerializer):
+# ! CourseOverView Serailizer
+class CourseOverViewSerailizer(ModelSerializer):
+    class Meta:
+        model=CourseOverView
+        fields=[
+            'id',
+            'title',
+        ]
+
+
+
+
+# ! WhoIsThisFor Serailizer
+class WhoIsThisForSerailizer(ModelSerializer):
+    class Meta:
+        model=WhoIsThisFor
+        fields=[
+            'pk',
+            'description'
+        ]
+
+
+
+
+# ! Prerequisite Serailizer
+class PrerequisiteSerailizer(ModelSerializer):
+    class Meta:
+        model=Prerequisite
+        fields=[
+            'pk',
+            'description'
+        ]
+
+
+
+
+# ! WhatYouWillLearn Serailizer
+class WhatYouWillLearnSerailizer(ModelSerializer):
+    class Meta:
+        model=WhatYouWillLearn
+        fields=[
+            'pk',
+            'description'
+        ]
+
+
+
+    
+# ! Course Content Serailizer 
+class ViewCourseContentSerailizer(ModelSerializer):
+
     class Meta:
         model=Content
         fields=[
             'id',
             'title',
-            'video',
         ]
 
 
 
 
-# ! Serailizer For Course Part Model
-class CoursePartSerializer(serializers.ModelSerializer):
-    content=ContentSerializer(many=True)
-    class Meta: 
+
+# ! CoursePart Serializer 
+class CoursePartSerailizer(ModelSerializer):
+    content=ViewCourseContentSerailizer(
+        many=True
+    )
+    
+    class Meta:
         model=CoursePart
         fields=[
             'id',
             'title',
             'content'
         ]
-
-
-
-
-# ! Serailizer For Course Detail 
-class CourseDetailSerializer(serializers.ModelSerializer):
-    course_part=CoursePartSerializer(many=True)
-
-    class Meta:
-        model=Course 
-        fields=[
-            'id',
-            'title',
-            'image',
-            'description',
-            'price',
-            'duration',
-            'time_stamp',
-            'is_free',
-            'course_part',
-            
-        ]
-
-
-
-
-# ! Seraiilizer For Enrollment Model
-class EnrollmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=Enrollment
-        fields=[
-            'id',
-        ]
-
-
-    def create(self, validated_data):
-        """
-        Overrding create method for creating new enrollment instance 
-        """
-        course_id=self.context['course_id']
-        user_id=self.context['user_id']
-        return Enrollment.objects.create(
-            course_id=course_id,
-            user_id=user_id
-        )
-
-
-    
-
 
